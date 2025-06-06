@@ -1,0 +1,131 @@
+:root {
+    --base-font-size: 14pt;
+    --nav-width: 200pt;
+    --system-blue: #007AFF;
+    --system-yellow: #f1d13b;
+    --system-red: #FF3B30;
+    --system-green: #28a546;
+    --system-gray: #8E8E93;
+    --system-gray-light: #E5E5EA;
+    --system-background: #F2F2F7;
+    --system-background-secondary: #E5E5EA;
+    --label-primary: #000000;
+    --label-secondary: #3C3C4399;
+}
+
+html {
+    font-size: var(--base-font-size);
+}
+
+hr {
+    border: none;
+    height: 1px;
+    width: calc(100% - 1rem);
+    background-color: var(--system-gray);
+}
+
+body {
+    font-size: var(--base-font-size);
+    margin: 0;
+    display: flex;
+    flex-direction: row;
+}
+
+nav {
+    width: var(--nav-width);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    align-items: end;
+    align-content: start;
+    place-items: end;
+    background-color: var(--system-background-secondary);
+    padding-right: 1rem;
+    box-sizing: border-box;
+    min-height: 100vh;
+}
+
+nav h1 {
+    text-align: right;
+}
+
+.nav-link {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    place-items: end;
+    width: 100%;
+    color: var(--label-primary);
+    margin-bottom: 1rem;
+}
+
+.nav-link > i {
+    padding-right: 1rem;
+}
+
+.nav-link > a {
+    text-decoration: none;
+    color: var(--label-primary);
+}
+
+.nav-link:hover,
+.nav-link:hover > a {
+    color: var(--system-blue);
+}
+
+#root {
+    width: calc(100% - var(--nav-width));
+    background-color: var(--system-background);
+    min-height: 100vh;
+    padding: 1rem 2rem;
+    box-sizing: border-box;
+}
+
+.page-title {
+    margin-top: 0;
+}
+
+.button-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+.button-container button:first-child {
+    margin-left: 0;
+}
+
+button {
+    border-radius: 8px;
+    color: var(--system-background);
+    background-color: var(--system-blue);
+    border: none;
+    padding: 0.5rem 1rem;
+    margin: 0 0.5rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+button:hover {
+    opacity: 0.8;
+}
+button.btn-dark {
+    background-color: var(--label-primary);
+}
+button.btn-danger {
+    background-color: var(--system-red);
+}
+button.btn-success {
+    background-color: var(--system-green);
+}
+button.btn-warning {
+    background-color: var(--system-yellow);
+    color: var(--label-primary);
+}
+button i, button span {
+    padding: 0 0.5rem;
+}
+
+
+
