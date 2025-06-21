@@ -1,8 +1,11 @@
+import base64
+import io
 import random
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import numpy as np
 
-from constants import *
+from Model.constants import *
 
 
 class Truck:
@@ -169,7 +172,7 @@ def generate_truck_arrivals(num_trucks, workday_finish, peak_times=None, spread=
     return trucks
 
 
-def plot_truck_data(trucks, peaks=None, spread=2.5):
+def plot_truck_data(trucks, peaks=None, spread=2.5, return_img = False):
     """
     Generate plots for truck data.
 
@@ -226,4 +229,13 @@ def plot_truck_data(trucks, peaks=None, spread=2.5):
 
     # Adjust layout and show plots
     plt.tight_layout(rect=[0, 0, 1, 0.96])  # Adjust layout to prevent overlap
-    plt.show()
+
+    if return_img:
+        # Convert plot to PNG image
+        output = io.BytesIO()
+        FigureCanvas(fig).print_png(output)
+        plt.close(fig)  # Close the figure to free memory
+        return base64.b64encode(output.getvalue()).decode('utf-8')
+    else:
+        plt.show()
+        return None

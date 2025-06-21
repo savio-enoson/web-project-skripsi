@@ -4,7 +4,7 @@ from pulp import GLPK_CMD
 import multiprocessing
 from pymongo import MongoClient
 
-from dataset import *
+from Model.dataset import *
 
 
 def setup_database():
@@ -13,6 +13,7 @@ def setup_database():
     """
     # Connect to MongoDB (default port 27017)
     client = MongoClient("localhost", 27017)
+    print("setting up database")
 
     # Check if the database already exists
     if "simulation_records" not in client.list_database_names():
@@ -20,6 +21,7 @@ def setup_database():
         db = client["simulation_records"]
         db.create_collection("simulation_instance")
         db.create_collection("permutations")
+        db.create_collection("truck_arrivals")
         # print("Database and collections created.")
     else:
         db = client["simulation_records"]
@@ -201,7 +203,7 @@ def summarize_schedule(schedule):
     }
 
 
-def plot_schedule(schedule, title, docks, workday_start, workday_finish, group_by_dock=False):
+def plot_schedule(schedule, title, docks, workday_start, workday_finish, group_by_dock=False, return_img = False):
     """
     Plot the schedule as a stacked horizontal bar chart.
 
@@ -297,7 +299,18 @@ def plot_schedule(schedule, title, docks, workday_start, workday_finish, group_b
 
     # Show the plot
     plt.tight_layout()
-    plt.show()
+
+    if return_img:
+        # Convert plot to PNG image
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+        buf.seek(0)
+        img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+        plt.close()
+        return img_base64
+    else:
+        plt.show()
+        return None
 
 
 def run_fifo_simulation(trucks, workday_start, workday_finish, docks):
@@ -365,7 +378,7 @@ def run_fifo_simulation(trucks, workday_start, workday_finish, docks):
     return schedule_FIFO
 
 
-def run_gp_simulation(trucks, workday_start, workday_finish, docks, weights, use_multithread=False):
+def run_gp_simulation(trucks, workday_start, workday_finish, docks, weights, use_multithread=False, return_ideal_values=False):
     """
     Run Goal Programming simulation with positive deviations for all goals.
 
@@ -465,7 +478,7 @@ def run_gp_simulation(trucks, workday_start, workday_finish, docks, weights, use
             '--mostf'  # Use most feasible solution
         ],
         keepFiles=False,
-        msg=False
+        msg=True
     ))
 
 
@@ -491,7 +504,10 @@ def run_gp_simulation(trucks, workday_start, workday_finish, docks, weights, use
                         "finish_time": t + unload_time
                     })
 
-    return schedule_GP
+    if return_ideal_values:
+        return schedule_GP, (ideal_waiting_time, ideal_unloading_time, ideal_overtime)
+    else:
+        return schedule_GP
 
 
 def test_schedule_with_mutations(schedule_GP, mutated_trucks, workday_start, workday_finish, docks):

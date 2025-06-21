@@ -1,34 +1,34 @@
-from simulation import *
-from statistical_analysis import *
+from Model.simulation import *
+from Model.statistical_analysis import *
 
 
 def run_simulation_instance(sim_instance, workday_start, workday_finish, db, show_plots=False):
     num_trucks, peak_hours, spread, seed = sim_instance
-    # trucks = generate_truck_arrivals(num_trucks, workday_finish, peak_hours, spread, seed)
-    trucks = [
-        Truck('S', 'ABS', 'GP', 0.75, 1200, 3400,
-              520, 1),
-        Truck('M', 'ABS', 'HI', 0.8, 3420, 6300,
-              525, 2),
-        Truck('L', 'PP', 'GP', 0.94, 9000, 7300,
-              580, 3),
-        Truck('M', 'PC', 'PET', 0.75, 2800, 5900,
-              945, 4),
-        Truck('M', 'TPE', 'GP', 0.83, 3150, 6100,
-              970, 5),
-        Truck('S', 'PC', 'PBT', 0.9, 1750, 3650,
-              985, 6),
-        Truck('M', 'M', 'SJ', 0.91, 3650, 6500,
-              1000, 7),
-        Truck('M', 'ABS', 'HT', 0.86, 3300, 5600,
-              1045, 8),
-    ]
+    trucks = generate_truck_arrivals(num_trucks, workday_finish, peak_hours, spread, seed)
+    # trucks = [
+    #     Truck('S', 'ABS', 'GP', 0.75, 1200, 3400,
+    #           520, 1),
+    #     Truck('M', 'ABS', 'HI', 0.8, 3420, 6300,
+    #           525, 2),
+    #     Truck('L', 'PP', 'GP', 0.94, 9000, 7300,
+    #           580, 3),
+    #     Truck('M', 'PC', 'PET', 0.75, 2800, 5900,
+    #           945, 4),
+    #     Truck('M', 'TPE', 'GP', 0.83, 3150, 6100,
+    #           970, 5),
+    #     Truck('S', 'PC', 'PBT', 0.9, 1750, 3650,
+    #           985, 6),
+    #     Truck('M', 'M', 'SJ', 0.91, 3650, 6500,
+    #           1000, 7),
+    #     Truck('M', 'ABS', 'HT', 0.86, 3300, 5600,
+    #           1045, 8),
+    # ]
 
     # DEBUG: Print Trucks
-    print("Dataset:")
-    for truck in trucks:
-        print(truck)
-    print("\n")
+    # print("Dataset:")
+    # for truck in trucks:
+    #     print(truck)
+    # print("\n")
 
     # Display Simulation Parameters in Mathplotlib
     if show_plots:
@@ -112,10 +112,6 @@ if __name__ == '__main__':
     # Check for MongoDB Database
     db = setup_database()
 
-    # Define workday start and finish times
-    workday_start = 480  # 08:00
-    workday_finish = 1080  # 18:00
-
     # num_trucks = random.randint(12, 20)
     num_trucks = 16
     peak_hours = [[10, 1], [15, 0.6]]
@@ -123,4 +119,4 @@ if __name__ == '__main__':
     seed = random.randint(0, 1000000)
     # seed = 493107
 
-    run_simulation_instance((num_trucks, peak_hours, spread, seed), workday_start, workday_finish, db, True)
+    run_simulation_instance((num_trucks, peak_hours, spread, seed), WORKDAY_START, WORKDAY_FINISH, db, True)

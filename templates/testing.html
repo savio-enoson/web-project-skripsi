@@ -1,30 +1,309 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1 class="page-title"><i class="bi-joystick"></i>&ensp;Testing</h1>
-    <div class="button-container">
-        <button>
-            <span>Add Dataset</span>
-            <i class="bi-plus-circle"></i>
-        </button>
-        <button class="btn-success">
-            <i class="bi-1-circle"></i>
-            <span>Success Button</span>
-        </button>
-        <button class="btn-warning">
-            <i class="bi-2-circle"></i>
-            <span>Warning Button</span>
-        </button>
-        <button class="btn-danger">
-            <i class="bi-3-circle"></i>
-            <span>Danger Button</span>
-        </button>
-        <button class="btn-dark">
-            <i class="bi-4-circle"></i>
-            <span>Dark Button</span>
-        </button>
+    <div class="container mt-4">
+        <div class="page-header mb-4">
+            <h3 class="page-title"><i class="bi-joystick"></i>&ensp;MCS Testing</h3>
+        </div>
+
+        <hr>
+
+        <!-- Test Parameters Form -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Test Parameters</h4>
+            </div>
+            <div class="card-body">
+                <form id="testForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="scheduleSelect" class="form-label">Select Schedule</label>
+                            <select class="form-select" id="scheduleSelect" required>
+                                <option value="" selected disabled>Choose a schedule...</option>
+                                {% for schedule in schedules %}
+                                    <option value="{{ schedule._id }}">
+                                        {{ schedule.dataset_name }} ({{ schedule._id|truncate(8, True, '') }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="numSimulations" class="form-label">Number of Simulations</label>
+                            <input type="number" class="form-control" id="numSimulations"
+                                   min="100" max="500" value="200" step="10" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="runTestBtn">
+                        Start Monte-Carlo Simulation
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="card" id="resultsSection" style="display: none;">
+            <div class="card-header">
+                <h4>Test Results</h4>
+            </div>
+            <div class="card-body" id="resultsContent">
+                <!-- Results will be loaded here -->
+            </div>
+        </div>
     </div>
-    <p>
-    Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aliquam, amet aperiam cupiditate distinctio est eum harum, magnam molestias odit quisquam quo repellendus rerum sed sunt, tenetur totam voluptatibus. Adipisci amet asperiores, aut impedit mollitia nam nemo provident quod veniam vero, vitae voluptas, voluptate. Animi aspernatur cupiditate debitis ea hic, labore, numquam, quasi quo ratione rem tenetur veritatis? A doloribus, eaque facilis laboriosam maxime molestias obcaecati odio quia quibusdam repellendus saepe, sequi tempora voluptates! Accusantium alias aspernatur commodi dolore dolores earum est et harum ipsa odit, quam reprehenderit sequi sint temporibus unde, veniam voluptatem? Consequuntur error impedit modi molestiae unde ut!
-    </p>
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.min.js" integrity="sha512-L0Shl7nXXzIlBSUUPpxrokqq4ojqgZFQczTYlGjzONGTDAcLremjwaWv5A+EDLnxhQzY5xUZPWLOLqYRkY0Cbw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('testForm');
+            const resultsSection = document.getElementById('resultsSection');
+            const resultsContent = document.getElementById('resultsContent');
+            const runTestBtn = document.getElementById('runTestBtn');
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const scheduleId = document.getElementById('scheduleSelect').value;
+                const numSimulations = document.getElementById('numSimulations').value;
+
+                // Show loading state
+                runTestBtn.disabled = true;
+                runTestBtn.innerHTML = `
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            Running Tests...
+        `;
+
+                // Send request to backend
+                fetch('/mcs_testing', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        schedule_id: scheduleId,
+                        num_simulations: parseInt(numSimulations)
+                    })
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => {
+                                throw err;
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.error) {
+                            throw new Error(data.error);
+                        }
+
+                        const results = data.results;
+                        const simInfo = results.simulation_info;
+
+                        // Build the results HTML
+                        let resultsHTML = `
+    <div class="simulation-header mb-4">
+        <h3>${simInfo.dataset_name || 'Simulation Results'}</h3>
+        <div class="simulation-meta">
+            <span class="badge bg-secondary">${simInfo.num_trucks} trucks</span>
+            <span class="badge bg-secondary">${results.granular_data.FIFO.length} iterations</span>
+            <span class="text-muted">Simulation ID: ${simInfo.simulation_id}</span>
+        </div>
+    </div>
+
+    <!-- Summary Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Performance Summary</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- FIFO Summary -->
+                <div class="col-md-6">
+                    <h5 class="mb-3">FIFO Scheduling</h5>
+                    <div class="parameter-grid">
+                        ${createMetricCards(results.summary.FIFO, 'FIFO')}
+                    </div>
+                </div>
+
+                <!-- GP Summary -->
+                <div class="col-md-6">
+                    <h5 class="mb-3">Goal Programming</h5>
+                    <div class="parameter-grid"results.granular_data.FIFO.length>
+                        ${createMetricCards(results.summary.GP, 'GP')}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Performance Comparison</h4>
+        </div>
+        <div class="card-body">
+            ${createComparisonTable(results.comparison)}
+        </div>
+    </div>
+
+    <!-- Granular Data Section -->
+    <div class="card">
+        <div class="card-header">
+            <h4>Detailed Results</h4>
+            <p class="text-muted mb-0">Showing ${results.granular_data.FIFO.length} iterations</p>
+        </div>
+        <div class="card-body">
+            <ul class="nav nav-tabs" id="granularTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="fifo-tab" data-bs-toggle="tab" data-bs-target="#fifo-tab-pane" type="button" role="tab">FIFO Results</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="gp-tab" data-bs-toggle="tab" data-bs-target="#gp-tab-pane" type="button" role="tab">GP Results</button>
+                </li>
+            </ul>
+            <div class="tab-content pt-3" id="granularTabContent">
+                <div class="tab-pane fade show active" id="fifo-tab-pane" role="tabpanel">
+                    ${createGranularTable(results.granular_data.FIFO)}
+                </div>
+                <div class="tab-pane fade" id="gp-tab-pane" role="tabpanel">
+                    ${createGranularTable(results.granular_data.GP)}
+                </div>
+            </div>
+        </div>
+    </div>
+`;
+
+                        resultsContent.innerHTML = resultsHTML;
+                        resultsSection.style.display = 'block';
+                    })
+                    .catch(error => {
+                        alert('Error: ' + error.message);
+                    })
+                    .finally(() => {
+                        // Reset button state
+                        runTestBtn.disabled = false;
+                        runTestBtn.textContent = 'Run Tests';
+                    });
+            });
+        });
+
+        // Helper functions
+        function createMetricCards(metrics, prefix) {
+            return `
+        <div class="parameter-item">
+            <h6>Wait Time</h6>
+            <p>Mean: ${metrics.wait_time.mean.toFixed(1)} mins</p>
+            <p>Std Dev: ±${metrics.wait_time.std_dev.toFixed(1)}</p>
+            <p>UCL: ${metrics.wait_time.UCL.toFixed(1)}</p>
+            <p>LCL: ${metrics.wait_time.LCL.toFixed(1)}</p>
+        </div>
+        <div class="parameter-item">
+            <h6>Avg Wait Time</h6>
+            <p>Mean: ${metrics.avg_wait_time.mean.toFixed(1)} mins</p>
+            <p>Std Dev: ±${metrics.avg_wait_time.std_dev.toFixed(1)}</p>
+            <p>UCL: ${metrics.avg_wait_time.UCL.toFixed(1)}</p>
+            <p>LCL: ${metrics.avg_wait_time.LCL.toFixed(1)}</p>
+        </div>
+        <div class="parameter-item">
+            <h6>Max Wait Time</h6>
+            <p>Mean: ${metrics.max_wait_time.mean.toFixed(1)} mins</p>
+            <p>Std Dev: ±${metrics.max_wait_time.std_dev.toFixed(1)}</p>
+            <p>UCL: ${metrics.max_wait_time.UCL.toFixed(1)}</p>
+            <p>LCL: ${metrics.max_wait_time.LCL.toFixed(1)}</p>
+        </div>
+        <div class="parameter-item">
+            <h6>Unload Time</h6>
+            <p>Mean: ${metrics.unload_time.mean.toFixed(1)} mins</p>
+            <p>Std Dev: ±${metrics.unload_time.std_dev.toFixed(1)}</p>
+            <p>UCL: ${metrics.unload_time.UCL.toFixed(1)}</p>
+            <p>LCL: ${metrics.unload_time.LCL.toFixed(1)}</p>
+        </div>
+        <div class="parameter-item">
+            <h6>Overtime</h6>
+            <p>Mean: ${metrics.overtime.mean.toFixed(1)} mins</p>
+            <p>Std Dev: ±${metrics.overtime.std_dev.toFixed(1)}</p>
+            <p>UCL: ${metrics.overtime.UCL.toFixed(1)}</p>
+            <p>LCL: ${metrics.overtime.LCL.toFixed(1)}</p>
+        </div>
+    `;
+        }
+
+        function createComparisonTable(comparison) {
+            return `
+        <div class="table-responsive">
+            <table class="table table-hover table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Metric</th>
+                        <th>Improvement (Absolute)</th>
+                        <th>Improvement (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Wait Time</td>
+                        <td>${comparison.wait_time_improvement.mean.toFixed(2)} mins</td>
+                        <td>${comparison.wait_time_improvement.percent.toFixed(2)} %</td>
+                    </tr>
+                    <tr>
+                        <td>Unload Time</td>
+                        <td>${comparison.unload_time_improvement.mean.toFixed(2)} mins</td>
+                        <td>${comparison.unload_time_improvement.percent.toFixed(2)} %</td>
+                    </tr>
+                    <tr>
+                        <td>Overtime</td>
+                        <td>${comparison.overtime_improvement.mean.toFixed(2)} mins</td>
+                        <td>${comparison.overtime_improvement.percent.toFixed(2)} %</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+        }
+
+        function createGranularTable(data) {
+            if (!data || data.length === 0) return '<p>No data available</p>';
+            const displayData = data;
+
+            let tableHTML = `
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Iteration</th>
+                        <th>Mutation</th>
+                        <th>Wait Time</th>
+                        <th>Avg Wait</th>
+                        <th>Max Wait</th>
+                        <th>Unload Time</th>
+                        <th>Overtime</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+            displayData.forEach((item, index) => {
+                tableHTML += `
+            <tr>
+                <td>${index + 1}</td>
+                <td>±${item.mutation_amount}</td>
+                <td>${item.wait_time}</td>
+                <td>${item.avg_wait_time.toFixed(2)}</td>
+                <td>${item.max_wait_time}</td>
+                <td>${item.unload_time}</td>
+                <td>${item.overtime}</td>
+            </tr>
+        `;
+            });
+
+            tableHTML += `
+                </tbody>
+            </table>
+        </div>
+    `;
+            return tableHTML;
+        }
+    </script>
 {% endblock %}

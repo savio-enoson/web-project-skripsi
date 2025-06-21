@@ -1,30 +1,223 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1 class="page-title"><i class="bi-bar-chart-steps"></i>&ensp;Schedule</h1>
-    <div class="button-container">
-        <button>
-            <span>Add Dataset</span>
-            <i class="bi-plus-circle"></i>
-        </button>
-        <button class="btn-success">
-            <i class="bi-1-circle"></i>
-            <span>Success Button</span>
-        </button>
-        <button class="btn-warning">
-            <i class="bi-2-circle"></i>
-            <span>Warning Button</span>
-        </button>
-        <button class="btn-danger">
-            <i class="bi-3-circle"></i>
-            <span>Danger Button</span>
-        </button>
-        <button class="btn-dark">
-            <i class="bi-4-circle"></i>
-            <span>Dark Button</span>
-        </button>
+    <div class="container mt-4">
+        <!-- Page Header Section -->
+        <div class="page-header mb-4">
+            <h3 class="page-title"><i class="bi-bar-chart-steps"></i>&ensp;Schedules</h3>
+        </div>
+
+        <hr>
+
+        <!-- Schedule Creation Form -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Create New Schedule</h4>
+            </div>
+            <div class="card-body">
+                <form id="scheduleForm" onsubmit="submitSchedule(event)">
+                    <!-- Dataset Selection -->
+                    <div class="mb-4">
+                        <label for="datasetSelect" class="form-label">Select Dataset</label>
+                        <select class="form-select" id="datasetSelect" required>
+                            <option value="" selected disabled>Choose a dataset...</option>
+                            {% for dataset in datasets %}
+                                <option value="{{ dataset._id }}">{{ dataset.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Goal Weight Sliders -->
+                    <div class="mb-3">
+                        <label class="form-label">Goal Weights</label>
+
+                        <div class="weight-control mb-3">
+                            <label for="weight1" class="form-label">Goal 1 (Waiting Time): <span
+                                    id="weight1Value">0.35</span></label>
+                            <input type="range" class="form-range weight-slider" id="weight1" min="0" max="1"
+                                   step="0.01" value="0.35">
+                        </div>
+
+                        <div class="weight-control mb-3">
+                            <label for="weight2" class="form-label">Goal 2 (Unloading Time): <span
+                                    id="weight2Value">0.15</span></label>
+                            <input type="range" class="form-range weight-slider" id="weight2" min="0" max="1"
+                                   step="0.01" value="0.15">
+                        </div>
+
+                        <div class="weight-control">
+                            <label for="weight3" class="form-label">Goal 3 (Overtime): <span
+                                    id="weight3Value">0.5</span></label>
+                            <input type="range" class="form-range weight-slider" id="weight3" min="0" max="1"
+                                   step="0.01" value="0.5">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        Generate Schedule
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Schedules Table -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4>Existing Schedules</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>Dataset Name</th>
+                            <th>Goal 1 (Waiting)</th>
+                            <th>Goal 2 (Unloading)</th>
+                            <th>Goal 3 (Overtime)</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for schedule in schedules %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ dataset_names.get(schedule.dataset_id, 'Unknown Dataset') }}</td>
+                                <td>{{ "%.2f"|format(schedule.weights[0]) }}</td>
+                                <td>{{ "%.2f"|format(schedule.weights[1]) }}</td>
+                                <td>{{ "%.2f"|format(schedule.weights[2]) }}</td>
+                                <td>
+                                    <a href="/view_schedule/{{ schedule._id }}" class="btn btn-sm btn-primary">
+                                        <i class="bi-search"></i> View
+                                    </a>
+                                    <button class="btn btn-sm btn-danger"
+                                            onclick="delete_schedule('{{ schedule._id }}', 'Schedule #{{ loop.index }}')">
+                                        <i class="bi-trash"></i> Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center">No schedules found</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
-    <p>
-    Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aliquam, amet aperiam cupiditate distinctio est eum harum, magnam molestias odit quisquam quo repellendus rerum sed sunt, tenetur totam voluptatibus. Adipisci amet asperiores, aut impedit mollitia nam nemo provident quod veniam vero, vitae voluptas, voluptate. Animi aspernatur cupiditate debitis ea hic, labore, numquam, quasi quo ratione rem tenetur veritatis? A doloribus, eaque facilis laboriosam maxime molestias obcaecati odio quia quibusdam repellendus saepe, sequi tempora voluptates! Accusantium alias aspernatur commodi dolore dolores earum est et harum ipsa odit, quam reprehenderit sequi sint temporibus unde, veniam voluptatem? Consequuntur error impedit modi molestiae unde ut!
-    </p>
+
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const sliders = document.querySelectorAll('.weight-slider');
+            const errorDisplay = document.getElementById('weightError');
+
+            // Update slider values and handle constraints
+            sliders.forEach(slider => {
+                const valueDisplay = document.getElementById(`${slider.id}Value`);
+
+                slider.addEventListener('input', function () {
+                    // Update the displayed value
+                    valueDisplay.textContent = parseFloat(this.value).toFixed(2);
+
+                    // Calculate current total
+                    let total = 0;
+                    sliders.forEach(s => {
+                        total += parseFloat(s.value);
+                    });
+
+                    // Adjust other sliders if total exceeds 1
+                    if (total > 1) {
+                        const excess = total - 1;
+                        const otherSliders = Array.from(sliders).filter(s => s !== slider);
+
+                        // Distribute the excess reduction proportionally
+                        let otherTotal = otherSliders.reduce((sum, s) => sum + parseFloat(s.value), 0);
+                        otherSliders.forEach(s => {
+                            const proportion = parseFloat(s.value) / otherTotal;
+                            s.value = (parseFloat(s.value) - (excess * proportion)).toFixed(2);
+                            document.getElementById(`${s.id}Value`).textContent = s.value;
+                        });
+                    }
+
+                    // Update total display
+                    total = Array.from(sliders).reduce((sum, s) => sum + parseFloat(s.value), 0);
+                });
+            });
+        });
+
+        function submitSchedule(event) {
+            event.preventDefault();
+
+            const datasetId = document.getElementById('datasetSelect').value;
+            const weight1 = parseFloat(document.getElementById('weight1').value);
+            const weight2 = parseFloat(document.getElementById('weight2').value);
+            const weight3 = parseFloat(document.getElementById('weight3').value);
+
+            // Validate weights sum to 1
+            const total = weight1 + weight2 + weight3;
+            if (Math.abs(total - 1) > 0.01) {
+                alert('Error: Weights must sum to exactly 1.0');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creating...';
+
+            fetch('/api/schedules', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    dataset_id: datasetId,
+                    weights: [weight1, weight2, weight3]
+                })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw err;
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    window.location.reload(); // Refresh to show new schedule
+                })
+                .catch(error => {
+                    alert(`Error: ${error.message || 'Failed to create schedule'}`);
+                })
+                .finally(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Generate Schedule';
+                });
+        }
+
+        function delete_schedule(id, name) {
+            if (confirm(`Are you sure you want to delete ${name}?`)) {
+                fetch(`/api/schedules/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to delete schedule');
+                        }
+                        window.location.reload(); // Refresh page after deletion
+                    })
+                    .catch(error => {
+                        alert(`Error deleting schedule: ${error.message}`);
+                    });
+            }
+        }
+
+    </script>
 {% endblock %}

@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container mt-4">
+        <h2 class="mb-4">Schedule: {{ dataset_name }}</h2>
+
+        <!-- Results Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Goal Weights</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="parameter-item">
+                            <h6>Waiting Time</h6>
+                            <p class="parameter-value">{{ "%.2f"|format(weights[0]) }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="parameter-item">
+                            <h6>Unloading Time</h6>
+                            <p class="parameter-value">{{ "%.2f"|format(weights[1]) }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="parameter-item">
+                            <h6>Overtime</h6>
+                            <p class="parameter-value">{{ "%.2f"|format(weights[2]) }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FIFO Schedule -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>FIFO Schedule</h4>
+            </div>
+            <div class="card-body">
+                <h5>Summary</h5>
+                <div class="row mb-3">
+                    <div class="col-md-2">
+                        <div class="parameter-item">
+                            <h6>Waiting Time</h6>
+                            <p class="parameter-value">{{ results_FIFO['wait_time'] }} mins</p>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="parameter-item">
+                            <h6>Unloading Time</h6>
+                            <p class="parameter-value">{{ results_FIFO['unload_time'] }} mins</p>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="parameter-item">
+                            <h6>Overtime</h6>
+                            <p class="parameter-value">{{ results_FIFO['overtime'] }} mins</p>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="parameter-item">
+                            <h6>Max. Wait Time</h6>
+                            <p class="parameter-value">{{ results_FIFO['max_wait_time'] }} mins</p>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="parameter-item">
+                            <h6>Avg. Wait Time</h6>
+                            <p class="parameter-value">{{ results_FIFO['avg_wait_time'] }} mins</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h5>Visualization</h5>
+                <img src="data:image/png;base64,{{ plot_FIFO }}" alt="FIFO Schedule" class="img-fluid mb-4">
+
+                <h5>Raw Data</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="table-dark">
+                        <tr>
+                            <th>Truck ID</th>
+                            <th>Dock</th>
+                            <th>Arrival</th>
+                            <th>Wait Start</th>
+                            <th>Unload Start</th>
+                            <th>Unload End</th>
+                            <th>Wait Time</th>
+                            <th>Unload Time</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for truck in schedule_FIFO %}
+                            <tr>
+                                <td>{{ truck.truck_id }}</td>
+                                <td>{{ truck.dock }}</td>
+                                <td>{{ truck.arrival_time }}</td>
+                                <td>{{ truck.start_time - truck.wait_time }}</td>
+                                <td>{{ truck.start_time }}</td>
+                                <td>{{ truck.start_time + truck.unload_time }}</td>
+                                <td>{{ truck.wait_time }}</td>
+                                <td>{{ truck.unload_time }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- GP Schedule -->
+        <div class="card">
+            <div class="card-header">
+                <h4>GP Schedule</h4>
+            </div>
+            <div class="card-body">
+                <h5>Summary</h5>
+                <div class="row mb-3">
+                    <div class="col-md-2">
+                        <div class="parameter-item">
+                            <h6>Waiting Time</h6>
+                            <p class="parameter-value">{{ results_GP['wait_time'] }} mins</p>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="parameter-item">
+                            <h6>Unloading Time</h6>
+                            <p class="parameter-value">{{ results_GP['unload_time'] }} mins</p>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="parameter-item">
+                            <h6>Overtime</h6>
+                            <p class="parameter-value">{{ results_GP['overtime'] }} mins</p>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="parameter-item">
+                            <h6>Max. Wait Time</h6>
+                            <p class="parameter-value">{{ results_GP['max_wait_time'] }} mins</p>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="parameter-item">
+                            <h6>Avg. Wait Time</h6>
+                            <p class="parameter-value">{{ results_GP['avg_wait_time'] }} mins</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h5>Visualization</h5>
+                <img src="data:image/png;base64,{{ plot_GP }}" alt="GP Schedule" class="img-fluid mb-4">
+
+                <h5>Raw Data</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="table-dark">
+                        <tr>
+                            <th>Truck ID</th>
+                            <th>Dock</th>
+                            <th>Arrival</th>
+                            <th>Wait Start</th>
+                            <th>Unload Start</th>
+                            <th>Unload End</th>
+                            <th>Wait Time</th>
+                            <th>Unload Time</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for truck in schedule_GP %}
+                            <tr>
+                                <td>{{ truck.truck_id }}</td>
+                                <td>{{ truck.dock }}</td>
+                                <td>{{ truck.arrival_time }}</td>
+                                <td>{{ truck.start_time - truck.wait_time }}</td>
+                                <td>{{ truck.start_time }}</td>
+                                <td>{{ truck.start_time + truck.unload_time }}</td>
+                                <td>{{ truck.wait_time }}</td>
+                                <td>{{ truck.unload_time }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

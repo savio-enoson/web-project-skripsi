@@ -45,26 +45,23 @@ nav {
     min-height: 100vh;
 }
 
-nav h1 {
+nav h3 {
     text-align: right;
 }
 
-.nav-link {
+.nav-link > a {
     display: grid;
     grid-template-columns: 1fr 1fr;
     place-items: end;
-    width: 100%;
+    width: calc(var(--nav-width) - 5rem);
     color: var(--label-primary);
     margin-bottom: 1rem;
-}
-
-.nav-link > i {
-    padding-right: 1rem;
-}
-
-.nav-link > a {
     text-decoration: none;
-    color: var(--label-primary);
+    font-size: 1.25rem;
+}
+
+.nav-link > a > i {
+    padding-right: 2rem;
 }
 
 .nav-link:hover,
@@ -90,42 +87,172 @@ nav h1 {
     justify-content: flex-start;
 }
 
+.button-container > button, a {
+    margin-right: 1rem;
+}
+
 .button-container button:first-child {
     margin-left: 0;
 }
 
-button {
-    border-radius: 8px;
-    color: var(--system-background);
-    background-color: var(--system-blue);
-    border: none;
-    padding: 0.5rem 1rem;
-    margin: 0 0.5rem;
+button i, button span {
+    /*padding: 0 0.5rem;*/
+}
+
+button.btn-icon {
+    padding: 1px;
+    aspect-ratio: 1/1;
+}
+
+.drop-zone {
+    border: 2px dashed var(--label-secondary);
+    border-radius: 5px;
+    padding: 30px;
+    text-align: center;
     cursor: pointer;
-    text-decoration: none;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
+    transition: all 0.3s;
+    margin-bottom: 20px;
 }
-button:hover {
-    opacity: 0.8;
+
+.drop-zone:hover {
+    background-color: var(--system-background-secondary);
 }
-button.btn-dark {
+
+.drop-zone.active {
+    background-color: var(--system-background);
+    border-color: var(--label-secondary);
+}
+
+.file-info {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: var(--system-gray);
+}
+
+.file-preview {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 20px;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--label-secondary);
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
     background-color: var(--label-primary);
 }
-button.btn-danger {
-    background-color: var(--system-red);
-}
-button.btn-success {
-    background-color: var(--system-green);
-}
-button.btn-warning {
-    background-color: var(--system-yellow);
-    color: var(--label-primary);
-}
-button i, button span {
-    padding: 0 0.5rem;
+
+input:checked + .toggle-slider:before {
+    transform: translateX(26px);
 }
 
+.toggle-label {
+    margin-left: 10px;
+    vertical-align: middle;
+}
 
+label.form-label {
+    font-weight: bold;
+}
 
+/* Add to your existing styles */
+.simulation-header {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.simulation-meta {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+.parameter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.parameter-item {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.parameter-item h6 {
+    color: #495057;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.parameter-item p {
+    margin-bottom: 0.2rem;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.weight-control {
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+/* Add to your existing styles */
+.metrics-chart-container {
+    position: relative;
+    margin: auto;
+    height: 300px;
+    width: 100%;
+}
+
+.card-body canvas {
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.nav-tabs .nav-link {
+    font-weight: 500;
+    color: #495057;
+}
+
+.nav-tabs .nav-link.active {
+    color: #0d6efd;
+    border-bottom: 2px solid #0d6efd;
+}

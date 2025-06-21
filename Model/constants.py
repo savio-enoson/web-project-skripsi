@@ -59,6 +59,9 @@ EDGES = {
     (2, 3): {"weight_kg": 90, "weight_m3": 175}
 }
 
+WORKDAY_START = 480  # 08:00
+WORKDAY_FINISH = 1080  # 18:00
+
 
 if __name__ == '__main__':
     print(json.dumps(DOCKS, indent=4))
