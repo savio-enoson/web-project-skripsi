@@ -13,9 +13,9 @@ app = Flask(__name__)
 db = setup_database()
 
 VOL_KEYS = {
-    16: "Low",
-    24: "Medium",
-    32: "High",
+    12: "Low",
+    16: "Medium",
+    20: "High",
 }
 
 
@@ -111,12 +111,12 @@ def create_truck_arrival():
 
     name = data.get('name')
     name = name if name else f"Dataset {db['truck_arrivals'].count_documents({})+1}"
-    num_trucks = 16
+    num_trucks = 12
     volume = data.get('volume')
     if volume == "medium":
-        num_trucks = 24
+        num_trucks = 16
     elif volume == "high":
-        num_trucks = 32
+        num_trucks = 20
     seed = data.get('seed', None)
     seed = int(seed) if seed is not None else random.randint(0, 1000000)
 
@@ -465,7 +465,9 @@ def mcs_testing():
             },
             "overtime_improvement": {
                 "mean": (calculate_stats(fifo_data, "overtime")["mean"] - calculate_stats(gp_data, "overtime")["mean"]),
-                "percent": (calculate_stats(fifo_data, "overtime")["mean"] - calculate_stats(gp_data, "overtime")["mean"]) / calculate_stats(fifo_data, "overtime")["mean"] * 100
+                "percent": (calculate_stats(fifo_data, "overtime")["mean"] - calculate_stats(gp_data, "overtime")[
+                    "mean"]) / calculate_stats(fifo_data, "overtime")["mean"] * 100 if
+                calculate_stats(fifo_data, "overtime")["mean"] != 0 else 0
             }
         }
     }
